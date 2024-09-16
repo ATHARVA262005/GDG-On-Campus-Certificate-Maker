@@ -8,7 +8,6 @@ Welcome to the GDG Certificate Generator! This web application is designed to cr
 
 - **User-Friendly Interface**: Simple and intuitive interface to create and manage certificates.
 - **Customizable Templates**: Choose from various templates and customize them with event details.
-- **Batch Certificate Generation**: Generate certificates for multiple participants at once.
 - **Downloadable Certificates**: Save generated certificates as PDFs for distribution.
 - **GDG Specific Templates**: Special templates tailored for GDG On Campus events.
 
