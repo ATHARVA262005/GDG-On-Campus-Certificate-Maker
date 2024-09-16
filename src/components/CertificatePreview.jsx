@@ -168,7 +168,6 @@ const CertificatePreview = ({ data }) => {
   return (
     <>
       <div className="relative mx-auto my-10 w-[1280px] h-[720px] bg-[url('src/assets/images/certi_bg.png')] bg-cover bg-center">
-        <img src={data.logo} alt="Logo" className="w-20 h-20 absolute top-4 left-10" />
         <div
           style={{
             position: 'absolute',
