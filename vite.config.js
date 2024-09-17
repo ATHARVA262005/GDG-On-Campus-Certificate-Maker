@@ -5,18 +5,18 @@ import commonjs from '@rollup/plugin-commonjs';
 export default defineConfig({
   plugins: [
     react(),
-    commonjs() // Handles CommonJS modules
+    commonjs()
   ],
   build: {
     rollupOptions: {
       external: ['pdfmake'], // Exclude pdfmake from the build
       output: {
         globals: {
-          pdfmake: 'pdfMake' // Ensure pdfMake is globally available
+          pdfmake: 'pdfMake'
         }
       }
     },
-    chunkSizeWarningLimit: 1000 // Optional: Adjust chunk size warning limit
+    chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
     include: ['pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts']
