@@ -1,7 +1,7 @@
 import pdfMake from 'pdfmake/build/pdfmake';
 
 // Access fonts directly from the pdfMake object
-import vfs_fonts from 'pdfmake/build/vfs_fonts';
+import vfs_fonts from './vfs_fonts';
 
 pdfMake.vfs = vfs_fonts.pdfMake.vfs;
 
