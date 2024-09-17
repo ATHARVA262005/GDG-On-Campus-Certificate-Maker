@@ -5,15 +5,20 @@ import commonjs from '@rollup/plugin-commonjs';
 export default defineConfig({
   plugins: [
     react(),
-    commonjs() // Ensures Vite can handle CommonJS modules
+    commonjs() // Handles CommonJS modules
   ],
-  optimizeDeps: {
-    include: ['@react-pdf/renderer', 'pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts']
-  },
   build: {
     rollupOptions: {
-      external: ['pdfmake'], // Treats pdfmake as an external module to avoid conflicts
+      external: ['pdfmake'], // Exclude pdfmake from the build
+      output: {
+        globals: {
+          pdfmake: 'pdfMake' // Ensure pdfMake is globally available
+        }
+      }
     },
-    chunkSizeWarningLimit: 1000, // Increases the default chunk size warning limit (optional)
+    chunkSizeWarningLimit: 1000 // Optional: Adjust chunk size warning limit
   },
+  optimizeDeps: {
+    include: ['pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts']
+  }
 });
