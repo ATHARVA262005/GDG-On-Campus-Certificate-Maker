@@ -3,8 +3,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 // Access fonts directly from the pdfMake object
 import vfs_fonts from 'pdfmake/build/vfs_fonts';
 
-// Configure additional options if needed
-// pdfMake.options = { ... };
+pdfMake.vfs = vfs_fonts.pdfMake.vfs;
 
 export default pdfMake;
 
