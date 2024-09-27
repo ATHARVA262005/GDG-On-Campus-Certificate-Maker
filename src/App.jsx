@@ -1,8 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import CertificateGenerator from './pages/CertificateGenerator';
 import BulkCertificateGenerator from './pages/BulkCertificateGenerator';
 import { Analytics } from "@vercel/analytics/react"
+import Home  from './pages/Home';
+import SingleCertificateGenerator from './pages/SingleCertificateGenerator';
 
 function App() {
   return (
@@ -10,9 +11,9 @@ function App() {
     <Analytics/>
     <Router>
       <Routes>
-        <Route path="/" element={<CertificateGenerator />} />
-        <Route path="/certificate-generator" element={<CertificateGenerator />} />
-        <Route path="/bulk-certificate-generator" element={<BulkCertificateGenerator />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/single-certificate" element={<SingleCertificateGenerator />} />
+        <Route path="/bulk-certificate" element={<BulkCertificateGenerator />} />
       </Routes>
     </Router>
     </>
