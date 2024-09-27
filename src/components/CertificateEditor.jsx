@@ -126,6 +126,7 @@ const CertificateEditor = ({ onUpdate }) => {
           <option value="green">Green</option>
           <option value="blue">Blue</option>
           <option value="yellow">Yellow</option>
+          
         </select>
       </div>
     </div>
