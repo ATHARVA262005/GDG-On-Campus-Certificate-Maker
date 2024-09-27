@@ -38,7 +38,7 @@ const HomePage = () => {
           </div>
           <p className={`${textCenter} text-gray-400 mt-8 mb-4`}>Used By:</p>
           <div className="flex justify-center my-5">
-            <img src="https://media.licdn.com/dms/image/v2/D4D0BAQG070lJHCX1yg/company-logo_200_200/company-logo_200_200/0/1725134325775/gdg_pdeacoem_logo?e=2147483647&v=beta&t=HQSdih9jqSHk_va0vgn6XyntzhCV4PbOKUYswp1IehY" alt="Logo 1" className="w-32 h-32 rounded-full" />
+            <img src="https://pbs.twimg.com/profile_images/1835181413424873472/JPpOu_UA_400x400.jpg" alt="Logo 1" className="w-32 h-32 rounded-full" />
           </div>
         </div>
       </div>
