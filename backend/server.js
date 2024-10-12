@@ -2,11 +2,13 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 
+const allowedOrigins = ['https://certgdgoncampus.vercel.app'];
 
 app.use(cors({
-    origin: 'https://certgdgoncampus.vercel.app', // Replace with your frontend URL
-    methods: ['GET', 'POST'], // Allowed methods
-    credentials: true // Allow credentials if needed
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
+    credentials: true, // Allow credentials if needed
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 const app = express();
