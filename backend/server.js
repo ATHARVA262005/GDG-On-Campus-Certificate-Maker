@@ -70,5 +70,5 @@ app.post('/send-bulk-email', async (req, res) => {
 });
 
 app.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
+  console.log('Server running on https://backend-certgdgoncampus.vercel.app');
 });
