@@ -292,6 +292,8 @@ const SingleCertificateGenerator = () => {
           </button>
         </div>
       </div>
+
+      
     </div>
   );
 };

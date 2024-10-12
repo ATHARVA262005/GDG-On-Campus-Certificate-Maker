@@ -2,6 +2,8 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub } from 'react-icons/fa';
 import { FaHeart } from 'react-icons/fa'; // Import FaHeart icon
+import DotPattern from '../components/ui/DotPattern';
+import { cn } from "../lib/utils";
 
 // Tailwind CSS classes (adjusted for better layout)
 const heroStyles = 'min-h-screen text-center flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-black text-white py-8 px-4';
@@ -13,7 +15,14 @@ const footerStyles = 'text-gray-400 text-center py-4 flex justify-center items-c
 
 const HomePage = () => {
   return (
+    
     <div className={heroStyles}>
+      <DotPattern
+        opacity={0.4}
+        className={cn(
+          "[mask-image:radial-gradient(400px_circle_at_center,white,transparent)]"
+        )}
+      />
       <div className={contentStyles}>  {/* New content section */}
         <div className="flex flex-col justify-center items-center h-full">  {/* Wrap content in a centered column */}
           <h1 className="text-4xl font-bold mb-4">Generate Certificates with Ease</h1>
@@ -45,6 +54,8 @@ const HomePage = () => {
       <div className={footerStyles}>
         <p>Created By <a href="https://atharvaralegankar.me" target="_blank" className="text-blue-500 hover:underline">Atharva Ralegankar</a> with lots of <FaHeart className="inline-block ml-2 text-red-500" /></p>  {/* Added link to Atharva's portfolio */}
       </div>
+
+      
     </div>
   );
 };

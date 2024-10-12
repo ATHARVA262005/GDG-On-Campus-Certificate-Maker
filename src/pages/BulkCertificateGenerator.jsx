@@ -3,10 +3,10 @@ import { Alert, AlertDescription } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Progress } from '../components/ui/Progress';
-import CertificatePreview from '../components/CertificatePreview';
 import pdfMake from '../utils/pdfmake';
 import { backgroundImages } from '../utils/backgroundImages';
 import { Link } from 'react-router-dom';
+import JSZip from 'jszip';
 
 const BulkCertificateGenerator = () => {
   const [file, setFile] = useState(null);
@@ -97,16 +97,39 @@ const BulkCertificateGenerator = () => {
         }));
   
         setCertificates(updatedData);
+
+        const zip = new JSZip();
+        const certificatesFolder = zip.folder("certificates");
+        const emailPromises = [];
   
-        const emailPromises = updatedData.map(async (certData) => {
+        for (let i = 0; i < updatedData.length; i++) {
+          const certData = updatedData[i];
           const pdfBase64 = await generatePDF(certData);
-          return { email: certData.email, pdfBase64 };
-        });
+          
+          // Add to zip file
+          certificatesFolder.file(`${certData.name}_certificate.pdf`, pdfBase64, {base64: true});
+          
+          // Prepare email data
+          emailPromises.push({ email: certData.email, pdfBase64 });
+          
+          setProgress(Math.round((i + 1) / updatedData.length * 50)); // First 50% for generation
+        }
   
-        const certificatesWithPDFs = await Promise.all(emailPromises);
+        // Generate zip file
+        const content = await zip.generateAsync({type:"blob"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(content);
+        link.download = "certificates.zip";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
   
-        // Send all certificates in one request
-        await sendBulkEmail(certificatesWithPDFs);
+        setProgress(75); // 75% after zip download
+  
+        // Send emails
+        await sendBulkEmail(emailPromises);
+  
+        setProgress(100); // 100% after emails sent
         setPreviewData(updatedData[0]);
       } catch (err) {
         setError(`Error processing CSV: ${err.message}`);
@@ -202,7 +225,6 @@ const BulkCertificateGenerator = () => {
       return new Promise((resolve) => {
         pdfDocGenerator.getBase64((pdfBase64) => {
           resolve(pdfBase64);
-          pdfDocGenerator.download('certificate.pdf');
         });
       });
     } catch (error) {
@@ -242,7 +264,7 @@ const BulkCertificateGenerator = () => {
       <h2 className="text-4xl font-bold mb-4">Bulk Certificate Generator</h2>
       <div className="w-full max-w-3xl space-y-4">
       <div className="flex flex-col items-start space-y-2">
-        <label className="block text-sm font-medium mb-1" htmlFor="csvFile">Upload CSV File:</label>
+        <label className="block text-sm font-medium mb-1" htmlFor="csvFile">Upload CSV File: <br /> Column: name, email, id </label>
         <Input type="file" accept=".csv" id="csvFile" onChange={handleFileChange} className="w-full"/>
       </div>
       <div className="flex flex-col items-start space-y-2">
@@ -310,9 +332,15 @@ const BulkCertificateGenerator = () => {
       {progress > 0 && <Progress value={progress} className="mt-4" />}
       
     </div>
-      <Link to="/bulk-generate" className="mt-4 text-blue-500 underline">Bulk Generate Again</Link>
+      <Link to="/bulk-certificate" className="mt-4 text-blue-500 underline">Bulk Generate Again</Link>
     </div>
+
+
+    
     </div>
+
+
+
   );
 };
 
