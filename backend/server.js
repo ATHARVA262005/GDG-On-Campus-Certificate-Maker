@@ -2,18 +2,24 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 
-const allowedOrigins = ['https://certgdgoncampus.vercel.app'];
-
 const app = express();
+
+const allowedOrigins = ['https://certgdgoncampus.vercel.app', 'http://localhost:5173'];
+
 app.use(cors({
-    origin: ['https://certgdgoncampus.vercel.app', 'http://localhost:5173'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
-    credentials: true, // Allow credentials if needed
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(cors());
-app.use(express.json({ limit: '20mb' })); // Adjust the limit as necessary
+app.use(express.json({ limit: '20mb' }));
 
 app.post('/send-email', async (req, res) => {
   const { senderEmail, senderPassword, toEmail, subject, message, pdfBase64 } = req.body;
@@ -43,7 +49,6 @@ app.post('/send-email', async (req, res) => {
   }
 });
 
-// New Endpoint for Bulk Email Sending
 app.post('/send-bulk-email', async (req, res) => {
   const { senderEmail, senderPassword, subject, message, certificates } = req.body;
 
@@ -78,6 +83,13 @@ app.post('/send-bulk-email', async (req, res) => {
   }
 });
 
-app.listen(5000, () => {
-  console.log('Server running on https://backend-certgdgoncampus.vercel.app');
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+// For Vercel deployment
+module.exports = app;
