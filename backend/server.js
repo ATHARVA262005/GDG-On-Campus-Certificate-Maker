@@ -4,14 +4,14 @@ const cors = require('cors');
 
 const allowedOrigins = ['https://certgdgoncampus.vercel.app'];
 
+const app = express();
 app.use(cors({
-    origin: allowedOrigins,
+    origin: ['https://certgdgoncampus.vercel.app', 'http://localhost:5173'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed methods
     credentials: true, // Allow credentials if needed
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-const app = express();
 app.use(cors());
 app.use(express.json({ limit: '20mb' })); // Adjust the limit as necessary
 
