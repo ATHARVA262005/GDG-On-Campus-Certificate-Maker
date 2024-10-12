@@ -2,6 +2,13 @@ const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
 
+
+app.use(cors({
+    origin: 'https://certgdgoncampus.vercel.app', // Replace with your frontend URL
+    methods: ['GET', 'POST'], // Allowed methods
+    credentials: true // Allow credentials if needed
+}));
+
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '20mb' })); // Adjust the limit as necessary
