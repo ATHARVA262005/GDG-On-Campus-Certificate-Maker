@@ -166,7 +166,7 @@ const BulkCertificateGenerator = () => {
       const logoBase64 = await getBase64FromUrl(logo);
       const organizerSignatureBase64 = await getBase64FromUrl(organizerSignature);
       const inchargeSignatureBase64 = await getBase64FromUrl(inchargeSignature);
-      const backgroundImageBase64 = backgroundImages[certificateData.backgroundColor] || '';
+      const backgroundImageBase64 = backgroundImages[backgroundColor] || '';
 
       const docDefinition = {
         pageSize: { width: 1280, height: 720 },
