@@ -166,12 +166,17 @@ const BulkCertificateGenerator = () => {
       const logoBase64 = await getBase64FromUrl(logo);
       const organizerSignatureBase64 = await getBase64FromUrl(organizerSignature);
       const inchargeSignatureBase64 = await getBase64FromUrl(inchargeSignature);
-      const backgroundImageBase64 = backgroundImages[certificateData.backgroundColor] || '';
-
+      let backgroundImageBase64 = '';
+  
+      try {
+        backgroundImageBase64 = backgroundImages[backgroundColor] || '';
+      } catch (error) {
+        console.warn('Error loading background image:', error);
+      }
+  
       const docDefinition = {
         pageSize: { width: 1280, height: 720 },
         pageMargins: [0, 0, 0, 0],
-        background: [{ image: backgroundImageBase64, width: 1280, height: 720 }],
         content: [
           { text: 'Certificate of Achievement', style: 'header', alignment: 'center', margin: [0, 120, 0, 0] },
           { text: 'This is to certify that', style: 'body', alignment: 'center', margin: [0, 20, 0, 0] },
@@ -208,7 +213,7 @@ const BulkCertificateGenerator = () => {
             margin: [0, 60, 150, 0],
           },
           { text: `Certificate ID: ${certificateData.id}`, style: 'footer', alignment: 'center', margin: [0, 20, 0, 0] },
-          { text: `Verify at: ${certificateData.verifyAtUrl || `https://gdgpdeacoem.in/certificates`} /${certificateData.id}`, style: 'footer', alignment: 'center', margin: [0, 10, 0, 0] },
+          { text: `Verify at: ${certificateData.verifyAtUrl || `https://gdgpdeacoem.in/certificates`}/${certificateData.id}`, style: 'footer', alignment: 'center', margin: [0, 10, 0, 0] },
         ],
         styles: {
           header: { fontSize: 30, bold: true, color: '#111827' },
@@ -219,9 +224,14 @@ const BulkCertificateGenerator = () => {
           footer: { fontSize: 12, color: '#111827', italics: true },
         },
       };
-
+  
+      // Only add background if the image was successfully loaded
+      if (backgroundImageBase64) {
+        docDefinition.background = [{ image: backgroundImageBase64, width: 1280, height: 720 }];
+      }
+  
       const pdfDocGenerator = pdfMake.createPdf(docDefinition);
-
+  
       return new Promise((resolve) => {
         pdfDocGenerator.getBase64((pdfBase64) => {
           resolve(pdfBase64);
@@ -229,6 +239,7 @@ const BulkCertificateGenerator = () => {
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
+      throw error;
     }
   };
 

@@ -20,5 +20,5 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['pdfmake','pdfmake/build/pdfmake', 'pdfmake/build/vfs_fonts']
-  }
+  },
 });
