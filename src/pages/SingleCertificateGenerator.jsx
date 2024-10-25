@@ -65,13 +65,13 @@ const SingleCertificateGenerator = () => {
       recipientName: certificateData.name,
       eventName: certificateData.program,
       certificateId: certificateData.id,
-      certificateUrl: `http://localhost:5000/certificates/${certificateData.id}`,
+      certificateUrl: `https://backend-certgdgoncampus.vercel.app/certificates/${certificateData.id}`,
       organizerName: certificateData.organizer,
       inChargeName: certificateData.incharge,
     };
 
     try {
-      const response = await fetch('http://localhost:5000/generate-certificate', {
+      const response = await fetch('https://backend-certgdgoncampus.vercel.app/generate-certificate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
