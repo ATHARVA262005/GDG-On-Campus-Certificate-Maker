@@ -13,6 +13,7 @@ const BulkCertificateGenerator = () => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mongodbUri, setMongodbUri] = useState('');
   const [formData, setFormData] = useState({
     senderEmail: '',
     senderPassword: '',
@@ -25,16 +26,26 @@ const BulkCertificateGenerator = () => {
     organizerName: '',
     inchargeName: '',
     logo: null,
+    mongodbUri: '',
     organizerSignature: null,
     inchargeSignature: null
   });
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
+  
+    // Specifically handle the mongoUri input separately
+    if (name === 'mongodbUri') {
+      setmongodbUri(value);
+      setFormData((prev) => ({
+        ...prev,
+        mongodbUri: value,  // Update formData.mongoUri
+      }));
+    }
   };
 
   const handleFileChange = (e, fieldName = 'file') => {
@@ -46,9 +57,9 @@ const BulkCertificateGenerator = () => {
 
     const reader = new FileReader();
     reader.onload = () => {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [fieldName]: reader.result
+        [fieldName]: reader.result,
       }));
     };
     reader.readAsDataURL(e.target.files[0]);
@@ -56,21 +67,22 @@ const BulkCertificateGenerator = () => {
 
   const processCSV = (text) => {
     try {
-      const lines = text.split('\n')
-        .map(line => line.trim())
-        .filter(line => line);
-      
-      const headers = lines[0].toLowerCase().split(',').map(header => header.trim());
+      const lines = text
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line);
+
+      const headers = lines[0].toLowerCase().split(',').map((header) => header.trim());
       const requiredHeaders = ['name', 'email', 'id'];
-      
-      if (!requiredHeaders.every(header => headers.includes(header))) {
+
+      if (!requiredHeaders.every((header) => headers.includes(header))) {
         throw new Error('CSV must contain name, email, and id columns');
       }
 
-      return lines.slice(1).map(line => {
-        const values = line.split(',').map(value => value.trim());
+      return lines.slice(1).map((line) => {
+        const values = line.split(',').map((value) => value.trim());
         const entry = {};
-        
+
         headers.forEach((header, index) => {
           if (requiredHeaders.includes(header)) {
             entry[header] = values[index] || '';
@@ -78,12 +90,7 @@ const BulkCertificateGenerator = () => {
         });
 
         return entry;
-      }).filter(entry => 
-        entry.name && 
-        entry.email && 
-        entry.email.includes('@') && 
-        entry.id
-      );
+      }).filter((entry) => entry.name && entry.email && entry.email.includes('@') && entry.id);
     } catch (error) {
       throw new Error(`CSV Processing Error: ${error.message}`);
     }
@@ -221,52 +228,56 @@ const BulkCertificateGenerator = () => {
     }
   };
   
+  
 
   const generateCertificates = async () => {
     try {
       setLoading(true);
       setProgress(0);
       setError('');
-
+  
       if (!file) {
         throw new Error('Please upload a CSV file');
       }
-
+  
       if (!formData.program || !formData.organizerName || !formData.inchargeName) {
         throw new Error('Please fill in all required fields');
       }
-
+  
       const fileText = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);
         reader.onerror = reject;
         reader.readAsText(file);
       });
-
+  
       const certificatesData = processCSV(fileText);
       if (certificatesData.length === 0) {
         throw new Error('No valid data found in CSV');
       }
-
+  
       const zip = new JSZip();
       const certificatesFolder = zip.folder("certificates");
       const emailPromises = [];
-
+  
       for (let i = 0; i < certificatesData.length; i++) {
         const certData = certificatesData[i];
         const pdfBase64 = await generatePDF(certData);
-        
+  
         certificatesFolder.file(`${certData.name}_certificate.pdf`, pdfBase64, {base64: true});
-        
+  
+        // Save certificate data to the database
+        await saveCertificateToDB(certData);
+  
         emailPromises.push({
           email: certData.email,
           pdfBase64,
           name: certData.name
         });
-        
+  
         setProgress(Math.round((i + 1) / certificatesData.length * 50));
       }
-
+  
       const zipBlob = await zip.generateAsync({type: "blob"});
       const downloadUrl = URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
@@ -276,9 +287,9 @@ const BulkCertificateGenerator = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-
+  
       setProgress(75);
-
+  
       if (formData.senderEmail && formData.senderPassword) {
         await fetch('https://backend-certgdgoncampus.vercel.app/send-bulk-email', {
           method: 'POST',
@@ -292,7 +303,7 @@ const BulkCertificateGenerator = () => {
           })
         });
       }
-
+  
       setProgress(100);
     } catch (error) {
       setError(error.message);
@@ -300,6 +311,39 @@ const BulkCertificateGenerator = () => {
       setLoading(false);
     }
   };
+  
+  
+  const saveCertificateToDB = async (certificateData) => {
+    const certificateDetails = {
+      recipientName: certificateData.name,
+      eventName: formData.program,
+      certificateId: certificateData.id,
+      certificateUrl: `http://localhost:5000/certificates/${certificateData.id}`,
+      organizerName: formData.organizerName,
+      inChargeName: formData.inchargeName,
+    };
+  
+    try {
+      const response = await fetch(`http://localhost:5000/generate-certificate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Mongo-URI': mongodbUri, // Use formData.mongoUri here
+        },
+        body: JSON.stringify(certificateDetails),
+      });
+  
+      const result = await response.json();
+      if (response.ok) {
+        console.log('Certificate saved to DB:', result);
+      } else {
+        console.error('Failed to save certificate:', result);
+      }
+    } catch (error) {
+      console.error('Error saving certificate:', error);
+    }
+  };
+  
 
 
   return (
@@ -319,6 +363,7 @@ const BulkCertificateGenerator = () => {
     <label className="block text-sm font-medium mb-1" htmlFor="csvFile">Upload CSV File: <br /> Column: name, email, id </label>
     <Input type="file" accept=".csv" id="csvFile" onChange={e => handleFileChange(e)} className="w-full"/>
   </div>
+  <input name="mongodbUri" value={mongodbUri} onChange={(e) => setMongodbUri(e.target.value)} placeholder="Enter MongoDB URI" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
   <div className="flex flex-col items-start space-y-2">
     <label className="block text-sm font-medium mb-1">Sender Email:</label>
     <Input type="email" name="senderEmail" value={formData.senderEmail} onChange={handleFormChange} placeholder="Your Email" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
