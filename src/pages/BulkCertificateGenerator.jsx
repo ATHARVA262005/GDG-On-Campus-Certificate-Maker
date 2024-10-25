@@ -95,14 +95,13 @@ const BulkCertificateGenerator = () => {
       const docDefinition = {
         pageSize: { width: 1280, height: 720 },
         pageMargins: [0, 0, 0, 0],
-        background: formData.backgroundColor && backgroundImage ? [
+        background: formData.backgroundColor ? [
           {
-              image: backgroundImage,
-              width: 1280,
-              height: 720,
+            image: backgroundImages[formData.backgroundColor],
+            width: 1280,
+            height: 720,
           }
-      ] : undefined,
-  
+        ] : undefined,
         content: [
           {
             text: 'Certificate of Achievement',
