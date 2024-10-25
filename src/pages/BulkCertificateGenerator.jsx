@@ -91,16 +91,18 @@ const BulkCertificateGenerator = () => {
 
   const generatePDF = async (certificateData) => {
     try {
+      
       const docDefinition = {
         pageSize: { width: 1280, height: 720 },
         pageMargins: [0, 0, 0, 0],
-        background: formData.backgroundColor ? [
+        background: formData.backgroundColor && backgroundImage ? [
           {
-            image: backgroundImages[formData.backgroundColor],
-            width: 1280,
-            height: 720,
+              image: backgroundImage,
+              width: 1280,
+              height: 720,
           }
-        ] : undefined,
+      ] : undefined,
+  
         content: [
           {
             text: 'Certificate of Achievement',
