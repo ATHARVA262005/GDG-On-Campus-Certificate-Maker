@@ -3,38 +3,35 @@ import pdfMake from '../utils/pdfmake';
 import { backgroundImages } from '../utils/backgroundImages';
 import { Link } from 'react-router-dom';
 
-const BulkCertificateGenerator = () => {
-  const [certificates, setCertificates] = useState([{ name: '', email: '', id: '' }]);
+const SingleCertificateGenerator = () => {
+  const [certificateData, setCertificateData] = useState({
+    name: '',
+    program: '',
+    description: '',
+    organizer: '',
+    incharge: '',
+    organizerSignature: '',
+    inchargeSignature: '',
+    logo: '',
+    id: '',
+    verificationUrl: '',
+    backgroundColor: 'red',
+  });
+
   const [senderEmail, setSenderEmail] = useState('');
   const [senderPassword, setSenderPassword] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
   const [mongodbUri, setMongodbUri] = useState('');
   const [loading, setLoading] = useState(false);
-  const [backgroundColor, setBackgroundColor] = useState('red');
 
-  const handleChange = (index, e) => {
-    const { name, value } = e.target;
-    const newCertificates = [...certificates];
-    newCertificates[index][name] = value;
-    setCertificates(newCertificates);
-  };
-
-  const handleAddCertificate = () => {
-    setCertificates([...certificates, { name: '', email: '', id: '' }]);
-  };
-
-  const handleRemoveCertificate = (index) => {
-    const newCertificates = certificates.filter((_, i) => i !== index);
-    setCertificates(newCertificates);
-  };
-
-  const sendEmailWithPDF = async (pdfBase64, recipientEmail) => {
+  const sendEmailWithPDF = async (pdfBase64) => {
     setLoading(true);
     const emailData = {
       senderEmail,
       senderPassword,
       toEmail: recipientEmail,
       subject: 'Your Certificate of Achievement',
-      message: 'Congratulations on completing the program! Attached is your certificate of achievement.',
+      message: `Dear ${certificateData.name},\n\nCongratulations on completing the ${certificateData.program} program! Attached is your certificate of achievement.\n\nBest regards,\n${certificateData.organizer}`,
       pdfBase64,
     };
 
@@ -50,17 +47,29 @@ const BulkCertificateGenerator = () => {
       const result = await response.json();
       if (response.ok) {
         console.log('Email sent successfully:', result);
+        alert('Certificate emailed successfully!');
       } else {
         console.error('Failed to send email:', result);
+        alert('Failed to send certificate.');
       }
     } catch (error) {
       console.error('Error sending email:', error);
+      alert('An error occurred while sending the email.');
     } finally {
       setLoading(false);
     }
   };
 
-  const saveCertificateToDB = async (pdfBase64, certificateDetails) => {
+  const saveCertificateToDB = async (pdfBase64) => {
+    const certificateDetails = {
+      recipientName: certificateData.name,
+      eventName: certificateData.program,
+      certificateId: certificateData.id,
+      certificateUrl: `http://localhost:5000/certificates/${certificateData.id}`,
+      organizerName: certificateData.organizer,
+      inChargeName: certificateData.incharge,
+    };
+
     try {
       const response = await fetch('http://localhost:5000/generate-certificate', {
         method: 'POST',
@@ -82,62 +91,192 @@ const BulkCertificateGenerator = () => {
     }
   };
 
-  const generatePDF = async (index) => {
-    const { name, id } = certificates[index];
-    const certificateDetails = {
-      recipientName: name,
-      certificateId: id,
-      certificateUrl: `http://localhost:5000/certificates/${id}`,
-    };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setCertificateData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    const docDefinition = {
-      pageSize: { width: 1280, height: 720 },
-      pageMargins: [0, 0, 0, 0],
-      background: [
-        {
-          image: backgroundImages[backgroundColor] || '',
-          width: 1280,
-          height: 720,
-        },
-      ],
-      content: [
-        {
-          text: 'Certificate of Achievement',
-          style: 'header',
-          alignment: 'center',
-          margin: [0, 120, 0, 0],
-        },
-        {
-          text: `This is to certify that ${name}`,
-          style: 'body',
-          alignment: 'center',
-          margin: [0, 20, 0, 0],
-        },
-        {
-          text: `has successfully completed the program with ID: ${id}`,
-          style: 'body',
-          alignment: 'center',
-          margin: [0, 20, 0, 0],
-        },
-      ],
-      styles: {
-        header: { fontSize: 30, bold: true, color: '#111827' },
-        body: { fontSize: 18, margin: [0, 5, 0, 5], color: '#111827' },
-      },
-    };
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCertificateData((prev) => ({ ...prev, [name]: event.target.result }));
+      };
+      reader.readAsDataURL(files[0]);
+    }
+  };
 
-    const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+  const handleColorChange = (e) => {
+    const { value } = e.target;
+    setCertificateData((prev) => ({ ...prev, backgroundColor: value }));
+  };
 
-    pdfDocGenerator.getBase64((pdfBase64) => {
-      saveCertificateToDB(pdfBase64, certificateDetails);
-      sendEmailWithPDF(pdfBase64, certificates[index].email);
-      pdfDocGenerator.download(`certificate_${id}.pdf`);
-    });
+  const getBase64FromUrl = async (url) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      return null;
+    }
+  };
+
+  const generatePDF = async () => {
+    try {
+      const logoBase64 = await getBase64FromUrl(certificateData.logo);
+      const organizerSignatureBase64 = await getBase64FromUrl(certificateData.organizerSignature);
+      const inchargeSignatureBase64 = await getBase64FromUrl(certificateData.inchargeSignature);
+      const backgroundImageBase64 = backgroundImages[certificateData.backgroundColor] || '';
+
+      const docDefinition = {
+        pageSize: { width: 1280, height: 720 },
+        pageMargins: [0, 0, 0, 0],
+        background: [
+          {
+            image: backgroundImageBase64,
+            width: 1280,
+            height: 720,
+          },
+        ],
+        content: [
+          {
+            text: 'Certificate of Achievement',
+            style: 'header',
+            alignment: 'center',
+            margin: [0, 120, 0, 0],
+          },
+          {
+            text: 'This is to certify that',
+            style: 'body',
+            alignment: 'center',
+            margin: [0, 20, 0, 0],
+          },
+          {
+            text: certificateData.name,
+            style: 'name',
+            alignment: 'center',
+            margin: [0, 20, 0, 0],
+          },
+          {
+            text: 'has demonstrated exceptional skills and dedication by successfully completing the',
+            style: 'body',
+            alignment: 'center',
+            margin: [0, 20, 0, 0],
+          },
+          {
+            text: certificateData.program,
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 20, 0, 0],
+          },
+          {
+            text: `The program was designed to provide valuable knowledge and skills in ${certificateData.description || 'emerging technologies and development practices'}.`,
+            style: 'body',
+            alignment: 'center',
+            margin: [120, 20, 120, 0],
+          },
+          {
+            columns: [
+              {
+                stack: [
+                  {
+                    image: organizerSignatureBase64,
+                    width: 120,
+                    height: 50,
+                    alignment: 'right',
+                    margin: [0, 10, 0, 0],
+                  },
+                  {
+                    text: certificateData.organizer,
+                    style: 'signatory',
+                    alignment: 'right',
+                    margin: [0, 20, 0, 0],
+                  },
+                ],
+                width: '36.5%',
+                alignment: 'right',
+              },
+              {
+                stack: [
+                  {
+                    image: logoBase64,
+                    width: 150,
+                    height: 150,
+                    alignment: 'center',
+                    margin: [0, -20, 0, 0],
+                  },
+                ],
+                width: '40%',
+                alignment: 'center',
+              },
+              {
+                stack: [
+                  {
+                    image: inchargeSignatureBase64,
+                    width: 120,
+                    height: 50,
+                    alignment: 'center',
+                    margin: [0, 10, 0, 0],
+                  },
+                  {
+                    text: certificateData.incharge,
+                    style: 'signatory',
+                    alignment: 'center',
+                    margin: [0, 20, 0, 0],
+                  },
+                ],
+                width: '10%',
+                alignment: 'left',
+              },
+            ],
+            margin: [0, 60, 150, 0],
+          },
+          {
+            text: `Certificate ID: ${certificateData.id}`,
+            style: 'footer',
+            alignment: 'center',
+            margin: [0, 20, 0, 0],
+          },
+          {
+            text: `Verify at: ${certificateData.verificationUrl || `https://gdgpdeacoem.in/certificates/${certificateData.id}`}`,
+            style: 'footer',
+            alignment: 'center',
+            margin: [0, 10, 0, 0],
+          },
+        ],
+        styles: {
+          header: { fontSize: 30, bold: true, color: '#111827' },
+          subheader: { fontSize: 25, bold: true, color: '#111827' },
+          body: { fontSize: 18, margin: [0, 5, 0, 5], color: '#111827' },
+          name: { fontSize: 22, bold: true, italics: true, color: '#111827' },
+          signatory: { fontSize: 14, color: '#111827' },
+          footer: { fontSize: 12, color: '#111827', italics: true },
+        },
+      };
+
+      const pdfDocGenerator = pdfMake.createPdf(docDefinition);
+
+      pdfDocGenerator.getBase64((pdfBase64) => {
+        saveCertificateToDB(pdfBase64); // Save certificate to MongoDB
+        sendEmailWithPDF(pdfBase64);
+        pdfDocGenerator.download('certificate.pdf');
+      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    certificates.forEach((_, index) => generatePDF(index));
+    generatePDF();
   };
 
   return (
@@ -151,70 +290,48 @@ const BulkCertificateGenerator = () => {
         </Link>
       </div>
       <div className="flex flex-col items-center space-y-8">
-        <h2 className="text-4xl font-bold mb-4">Bulk Certificate Generator</h2>
-        <form onSubmit={handleSubmit} className="w-full max-w-3xl space-y-4">
-          {certificates.map((cert, index) => (
-            <div key={index} className="border p-4 rounded bg-gray-700">
-              <input
-                name="name"
-                value={cert.name}
-                onChange={(e) => handleChange(index, e)}
-                placeholder="Enter Participant Name"
-                className="w-full p-2 rounded bg-gray-600 border border-gray-500 focus:border-blue-500"
-              />
-              <input
-                name="email"
-                value={cert.email}
-                onChange={(e) => handleChange(index, e)}
-                placeholder="Enter Recipient's Email"
-                className="w-full p-2 rounded bg-gray-600 border border-gray-500 focus:border-blue-500"
-              />
-              <input
-                name="id"
-                value={cert.id}
-                onChange={(e) => handleChange(index, e)}
-                placeholder="Enter Certificate ID"
-                className="w-full p-2 rounded bg-gray-600 border border-gray-500 focus:border-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveCertificate(index)}
-                className="text-red-600 hover:underline"
-              >
-                Remove Certificate
-              </button>
-            </div>
-          ))}
-          <button type="button" onClick={handleAddCertificate} className="text-blue-600 hover:underline">
-            Add Another Certificate
-          </button>
-          <input
-            value={mongodbUri}
-            onChange={(e) => setMongodbUri(e.target.value)}
-            placeholder="Enter MongoDB URI"
-            className="w-full p-2 rounded bg-gray-600 border border-gray-500 focus:border-blue-500"
-          />
-          <select
-            value={backgroundColor}
-            onChange={(e) => setBackgroundColor(e.target.value)}
-            className="w-full p-2 rounded bg-gray-600 border border-gray-500 focus:border-blue-500"
-          >
+        <h2 className="text-4xl font-bold mb-4">Single Certificate Generator</h2>
+        <div className="w-full max-w-3xl space-y-4">
+          <input name="name" value={certificateData.name} onChange={handleChange} placeholder="Enter Participant Name" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <input name="program" value={certificateData.program} onChange={handleChange} placeholder="Enter Program Name" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <textarea name="description" value={certificateData.description} onChange={handleChange} placeholder="Enter Program Description" rows="3" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500"></textarea>
+          <input name="organizer" value={certificateData.organizer} onChange={handleChange} placeholder="Enter Organizer's Name" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <input name="incharge" value={certificateData.incharge} onChange={handleChange} placeholder="Enter In-charge's Name" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <div className="flex flex-col items-start space-y-2">
+            <label htmlFor="organizerSignature" className="text-lg">Upload Organizer's Signature:</label>
+            <input type="file" name="organizerSignature" accept="image/*" onChange={handleFileChange} className="w-full" />
+          </div>
+          <div className="flex flex-col items-start space-y-2">
+            <label htmlFor="inchargeSignature" className="text-lg">Upload In-charge's Signature:</label>
+            <input type="file" name="inchargeSignature" accept="image/*" onChange={handleFileChange} className="w-full" />
+          </div>
+          <div className="flex flex-col items-start space-y-2">
+            <label htmlFor="logo" className="text-lg">Upload Logo:</label>
+            <input type="file" name="logo" accept="image/*" onChange={handleFileChange} className="w-full" />
+          </div>
+          <input name="id" value={certificateData.id} onChange={handleChange} placeholder="Enter Certificate ID" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <input name="verificationUrl" value={certificateData.verificationUrl} onChange={handleChange} placeholder="Enter Verification URL" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <input name="mongodbUri" value={mongodbUri} onChange={(e) => setMongodbUri(e.target.value)} placeholder="Enter MongoDB URI" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <select name="backgroundColor" value={certificateData.backgroundColor} onChange={handleColorChange} className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500">
             <option value="red">Red</option>
             <option value="blue">Blue</option>
             <option value="green">Green</option>
             <option value="yellow">Yellow</option>
           </select>
+          <input name="senderEmail" value={senderEmail} onChange={(e) => setSenderEmail(e.target.value)} placeholder="Enter Your Email" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <input name="senderPassword" value={senderPassword} onChange={(e) => setSenderPassword(e.target.value)} type="password" placeholder="Enter Your Email Password" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
+          <input name="recipientEmail" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="Enter Recipient's Email" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
           <button
-            type="submit"
+            onClick={generatePDF}
             className={`w-full p-3 rounded-lg bg-blue-600 text-white font-bold ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
             disabled={loading}
           >
-            {loading ? 'Sending Certificates...' : 'Generate and Send Certificates'}
+            {loading ? 'Sending Certificate...' : 'Generate and Send Certificate'}
           </button>
-        </form>
+        </div>
       </div>
     </div>
   );
 };
 
-export default BulkCertificateGenerator;
+export default SingleCertificateGenerator;
