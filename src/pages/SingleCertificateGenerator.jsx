@@ -110,7 +110,7 @@ const SingleCertificateGenerator = () => {
         pageMargins: [0, 0, 0, 0],
         background: [
           {
-            image: backgroundImageBase64,
+            image: backgroundImages[formData.backgroundColor],
             width: 1280,
             height: 720,
           },
