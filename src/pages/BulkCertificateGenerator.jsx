@@ -295,7 +295,7 @@ const BulkCertificateGenerator = () => {
       setProgress(75);
   
       if (formData.senderEmail && formData.senderPassword) {
-        await fetch('${import.meta.env.VITE_BACKEND_API_URL}/send-bulk-email', {
+        await fetch('https://backend-certgdgoncampus.vercel.app/send-bulk-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -322,13 +322,13 @@ const BulkCertificateGenerator = () => {
       recipientName: certificateData.name,
       eventName: formData.program,
       certificateId: certificateData.id,
-      certificateUrl: `${import.meta.env.VITE_BACKEND_API_URL}/certificates/${certificateData.id}`,
+      certificateUrl: `https://backend-certgdgoncampus.vercel.app/certificates/${certificateData.id}`,
       organizerName: formData.organizerName,
       inChargeName: formData.inchargeName,
     };
   
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/generate-certificate`, {
+      const response = await fetch(`https://backend-certgdgoncampus.vercel.app/generate-certificate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

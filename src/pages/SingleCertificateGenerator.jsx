@@ -45,7 +45,7 @@ const SingleCertificateGenerator = () => {
     };
 
     try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/send-email`, {
+        const response = await fetch('https://backend-certgdgoncampus.vercel.app/send-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -74,13 +74,13 @@ const SingleCertificateGenerator = () => {
       recipientName: certificateData.name,
       eventName: certificateData.program,
       certificateId: certificateData.id,
-      certificateUrl: `${import.meta.env.VITE_BACKEND_API_URL}/certificates/${certificateData.id}`,
+      certificateUrl: `https://backend-certgdgoncampus.vercel.app/certificates/${certificateData.id}`,
       organizerName: certificateData.organizer,
       inChargeName: certificateData.incharge,
     };
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/generate-certificate`, {
+      const response = await fetch('https://backend-certgdgoncampus.vercel.app/generate-certificate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
