@@ -96,6 +96,8 @@ const BulkCertificateGenerator = () => {
     }
   };
 
+  
+
   const generatePDF = async (certificateData) => {
     try {
       
@@ -218,6 +220,8 @@ const BulkCertificateGenerator = () => {
           footer: { fontSize: 12, color: '#111827', italics: true },
         },
       };
+
+      
   
       return new Promise((resolve) => {
         pdfMake.createPdf(docDefinition).getBase64(resolve);
@@ -291,7 +295,7 @@ const BulkCertificateGenerator = () => {
       setProgress(75);
   
       if (formData.senderEmail && formData.senderPassword) {
-        await fetch('https://backend-certgdgoncampus.vercel.app/send-bulk-email', {
+        await fetch('http://localhost:5000/send-bulk-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -318,13 +322,13 @@ const BulkCertificateGenerator = () => {
       recipientName: certificateData.name,
       eventName: formData.program,
       certificateId: certificateData.id,
-      certificateUrl: `https://backend-certgdgoncampus.vercel.app/certificates/${certificateData.id}`,
+      certificateUrl: `http://localhost:5000/certificates/${certificateData.id}`,
       organizerName: formData.organizerName,
       inChargeName: formData.inchargeName,
     };
   
     try {
-      const response = await fetch(`https://backend-certgdgoncampus.vercel.app/generate-certificate`, {
+      const response = await fetch(`http://localhost:5000/generate-certificate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -424,6 +428,8 @@ const BulkCertificateGenerator = () => {
   <Button className={`w-full p-3 rounded-lg bg-blue-600 text-white font-bold`} onClick={generateCertificates} disabled={progress > 0 && progress < 100}>Generate Certificates</Button>
   {error && <Alert className="mt-4"><AlertDescription>{error}</AlertDescription></Alert>}
   {progress > 0 && <Progress value={progress} className="mt-4" />}
+
+  
 </div>
 
       <Link to="/bulk-certificate" className="mt-4 text-blue-500 underline">Bulk Generate Again</Link>

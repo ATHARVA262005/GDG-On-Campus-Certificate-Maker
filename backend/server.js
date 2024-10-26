@@ -49,7 +49,7 @@ app.post('/generate-certificate', async (req, res) => {
     // Establish MongoDB connection if not already connected
     if (!mongoConnectionEstablished) {
         try {
-            await mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true });
+            await mongoose.connect(mongoUri, { useNewUrlParser: true, useUnifiedTopology: true,serverSelectionTimeoutMS: 20000 });
             mongoConnectionEstablished = true;
             console.log('MongoDB connected');
         } catch (err) {
@@ -186,26 +186,18 @@ app.post('/send-bulk-email', async (req, res) => {
         });
 
         const emailPromises = certificates.map(async (certificate) => {
-            const { email, pdfBase64, recipientName, eventName, certificateId, organizerName, inChargeName } = certificate;
-            const certificateUrl = `http://yourdomain.com/certificate/${certificateId}`;
-
-            const cert = new Certificate({
-                recipientName,
-                eventName,
-                certificateId,
-                certificateUrl,
-                organizerName,
-                inChargeName
-            });
-
-            await cert.save();
-
+            const { email, pdfBase64 } = certificate;
+            
             const mailOptions = {
                 from: senderEmail,
                 to: email,
-                subject,
+                subject: subject,
                 text: message,
-                attachments: [{ filename: 'certificate.pdf', content: pdfBase64, encoding: 'base64' }],
+                attachments: [{
+                    filename: 'certificate.pdf',
+                    content: Buffer.from(pdfBase64, 'base64'),
+                    contentType: 'application/pdf'
+                }]
             };
 
             return transporter.sendMail(mailOptions);
@@ -214,9 +206,10 @@ app.post('/send-bulk-email', async (req, res) => {
         await Promise.all(emailPromises);
         res.status(200).json({ message: 'All emails sent successfully!' });
     } catch (error) {
-        console.error('Error sending bulk email:', error);
-        res.status(500).json({ error: 'Failed to send bulk emails.' });
+        console.error('Error sending bulk email:', error.message); // Log specific error message
+        res.status(500).json({ error: 'Failed to send bulk emails.', details: error.message });
     }
+    
 });
 
 // For local development
