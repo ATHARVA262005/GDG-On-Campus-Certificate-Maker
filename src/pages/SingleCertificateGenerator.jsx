@@ -45,7 +45,7 @@ const SingleCertificateGenerator = () => {
     };
 
     try {
-        const response = await fetch('http://localhost:5000/send-email', {
+        const response = await fetch('https://backend-certgdgoncampus.vercel.app/send-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ const SingleCertificateGenerator = () => {
     };
 
     try {
-      const response = await fetch('http://localhost:5000/generate-certificate', {
+      const response = await fetch('https://backend-certgdgoncampus.vercel.app/generate-certificate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
