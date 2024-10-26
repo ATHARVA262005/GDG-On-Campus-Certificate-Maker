@@ -295,7 +295,7 @@ const BulkCertificateGenerator = () => {
       setProgress(75);
   
       if (formData.senderEmail && formData.senderPassword) {
-        await fetch('http://localhost:5000/send-bulk-email', {
+        await fetch('https://backend-certgdgoncampus.vercel.app/send-bulk-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -322,13 +322,13 @@ const BulkCertificateGenerator = () => {
       recipientName: certificateData.name,
       eventName: formData.program,
       certificateId: certificateData.id,
-      certificateUrl: `http://localhost:5000/certificates/${certificateData.id}`,
+      certificateUrl: `https://backend-certgdgoncampus.vercel.app/certificates/${certificateData.id}`,
       organizerName: formData.organizerName,
       inChargeName: formData.inchargeName,
     };
   
     try {
-      const response = await fetch(`http://localhost:5000/generate-certificate`, {
+      const response = await fetch(`https://backend-certgdgoncampus.vercel.app/generate-certificate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
