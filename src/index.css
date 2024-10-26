@@ -9,3 +9,7 @@
       transform: none; /* Remove unnecessary transformations on mobile */
     }
   }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+  }

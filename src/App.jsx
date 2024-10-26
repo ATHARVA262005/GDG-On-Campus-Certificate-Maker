@@ -4,6 +4,7 @@ import BulkCertificateGenerator from './pages/BulkCertificateGenerator';
 import { Analytics } from "@vercel/analytics/react"
 import Home  from './pages/Home';
 import SingleCertificateGenerator from './pages/SingleCertificateGenerator';
+import Docs from './pages/Docs';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/single-certificate" element={<SingleCertificateGenerator />} />
         <Route path="/bulk-certificate" element={<BulkCertificateGenerator />} />
+        <Route path="/docs" element={<Docs />} />
       </Routes>
     </Router>
     </>

@@ -26,39 +26,48 @@ const SingleCertificateGenerator = () => {
 
   const sendEmailWithPDF = async (pdfBase64) => {
     setLoading(true);
+    
+    // Clean up base64 if it includes data URI prefix
+    const cleanPdfBase64 = pdfBase64.replace(/^data:application\/pdf;base64,/, '');
+    
     const emailData = {
-      senderEmail,
-      senderPassword,
-      toEmail: recipientEmail,
-      subject: 'Your Certificate of Achievement',
-      message: `Dear ${certificateData.name},\n\nCongratulations on completing the ${certificateData.program} program! Attached is your certificate of achievement.\n\nBest regards,\n${certificateData.organizer}`,
-      pdfBase64,
+        senderEmail,
+        senderPassword,
+        toEmail: recipientEmail,
+        subject: 'Your Certificate of Achievement',
+        message: `Dear ${certificateData.name},\n\nCongratulations on completing the ${certificateData.program} program! Attached is your certificate of achievement.\n\nBest regards,\n${certificateData.organizer}`,
+        pdfBase64: cleanPdfBase64,
+        recipientName: certificateData.name,
+        eventName: certificateData.program,
+        certificateId: certificateData.id,
+        organizerName: certificateData.organizer,
+        inChargeName: certificateData.incharge
     };
 
     try {
-      const response = await fetch('https://backend-certgdgoncampus.vercel.app/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
-      });
+        const response = await fetch('http://localhost:5000/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(emailData),
+        });
 
-      const result = await response.json();
-      if (response.ok) {
+        const result = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(result.details );
+        }
+
         console.log('Email sent successfully:', result);
         alert('Certificate emailed successfully!');
-      } else {
-        console.error('Failed to send email:', result);
-        alert('Failed to send certificate.');
-      }
     } catch (error) {
-      console.error('Error sending email:', error);
-      alert('An error occurred while sending the email.');
+        console.error('Error sending email:', error);
+        alert(`Failed to send certificate: ${error.message}`);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   const saveCertificateToDB = async (pdfBase64) => {
     const certificateDetails = {
@@ -71,7 +80,7 @@ const SingleCertificateGenerator = () => {
     };
 
     try {
-      const response = await fetch('https://backend-certgdgoncampus.vercel.app/generate-certificate', {
+      const response = await fetch('http://localhost:5000/generate-certificate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -322,7 +331,7 @@ const SingleCertificateGenerator = () => {
           <input name="senderPassword" value={senderPassword} onChange={(e) => setSenderPassword(e.target.value)} type="password" placeholder="Enter Your Email Password" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
           <input name="recipientEmail" value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)} placeholder="Enter Recipient's Email" className="w-full p-2 rounded bg-gray-700 border border-gray-500 focus:border-blue-500" />
           <button
-            onClick={generatePDF}
+            onClick={handleSubmit}
             className={`w-full p-3 rounded-lg bg-blue-600 text-white font-bold ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
             disabled={loading}
           >

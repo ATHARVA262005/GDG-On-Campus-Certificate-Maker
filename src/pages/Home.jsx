@@ -1,17 +1,18 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaGithub } from 'react-icons/fa';
-import { FaHeart } from 'react-icons/fa'; // Import FaHeart icon
+import { FaHeart } from 'react-icons/fa';
+import { MdOutlineDocumentScanner } from "react-icons/md";
 import DotPattern from '../components/ui/DotPattern';
 import { cn } from "../lib/utils";
 
 // Tailwind CSS classes (adjusted for better layout)
 const heroStyles = 'min-h-screen text-center flex flex-col items-center justify-center bg-gradient-to-b from-slate-900 to-black text-white py-8 px-4';
-const contentStyles = 'flex flex-col items-center space-y-8'; // New class for content section
-const buttonContainer = 'flex justify-center mt-8 space-x-4'; // Increased spacing between buttons
+const contentStyles = 'flex flex-col items-center space-y-8';
+const buttonContainer = 'flex justify-center mt-8 space-x-4';
 const textCenter = 'text-center';
-const descriptionText = 'text-lg leading-loose mb-6'; // Reduced spacing
-const footerStyles = 'text-gray-400 text-center py-4 flex justify-center items-center'; // Removed unnecessary styles
+const descriptionText = 'text-lg leading-loose mb-6';
+const footerStyles = 'text-gray-400 text-center py-4 flex justify-center items-center';
 
 const HomePage = () => {
   return (
@@ -35,6 +36,15 @@ const HomePage = () => {
           <div className={buttonContainer}>
             <Link to="/single-certificate" className="bg-blue-500 text-white px-6 py-4 rounded-lg hover:bg-blue-600">Single Certificate</Link>
             <Link to="/bulk-certificate" className="bg-blue-500 text-white px-6 py-4 rounded-lg hover:bg-blue-600">Bulk Certificate</Link>
+          </div>
+          <div className="flex justify-center items-center">
+            <div className={textCenter}>
+              <p className="text-gray-400 mt-5 mb-2">Need Some help:</p>
+              <a href="/docs" className="text-white hover:underline flex items-center">
+                <MdOutlineDocumentScanner className="inline-block mr-2 text-3xl" />
+                <span className='text-end'>Read Documentation</span>
+              </a>
+            </div>
           </div>
           <div className="flex justify-center items-center">
             <div className={textCenter}>

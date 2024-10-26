@@ -9,7 +9,7 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = ['https://certgdgoncampus.vercel.app', 'http://localhost:5173'];
+const allowedOrigins = ['https://certgdgoncampus.vercel.app', 'http://localhost:5173', 'https://backend-certgdgoncampus.vercel.app','http://localhost:3000','https://backend-certgdgoncampus.vercel.app/send-email'];
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -19,15 +19,23 @@ app.use(cors({
             callback(new Error('Not allowed by CORS'));
         }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
     allowedHeaders: ['Content-Type', 'Authorization', 'Mongo-URI']
 }));
 
-app.use(express.json({ limit: '20mb' }));
+// Increase payload limit for large PDFs
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // MongoDB connection (moved to the generate-certificate endpoint)
 let mongoConnectionEstablished = false;
+
+app.get('/test', (req, res) => {
+    res.json({ status: 'Server is running' });
+});
 
 // Generate Certificate Endpoint
 app.post('/generate-certificate', async (req, res) => {
@@ -49,7 +57,7 @@ app.post('/generate-certificate', async (req, res) => {
         }
     }
 
-    const certificateUrl = `http://yourdomain.com/certificate/${certificateId}`;
+    const certificateUrl = `https://backend-certgdgoncampus.vercel.app/certificate/${certificateId}`;
 
     try {
         const certificate = new Certificate({ 
@@ -84,44 +92,85 @@ app.get('/certificate/:id', async (req, res) => {
 
 // Send Email Endpoint
 app.post('/send-email', async (req, res) => {
-    const { senderEmail, senderPassword, toEmail, subject, message, pdfBase64, recipientName, eventName, certificateId, organizerName, inChargeName } = req.body;
-
-    const certificateUrl = `http://yourdomain.com/certificate/${certificateId}`;
-
+    console.log('Received email request');
+    
     try {
-        const certificate = new Certificate({
+        const { 
+            senderEmail, 
+            senderPassword, 
+            toEmail, 
+            subject, 
+            message, 
+            pdfBase64,
             recipientName,
             eventName,
             certificateId,
-            certificateUrl,
             organizerName,
-            inChargeName
-        });
-        await certificate.save();
+            inChargeName 
+        } = req.body;
 
+        if (!senderEmail || !senderPassword || !toEmail || !pdfBase64) {
+            console.log('Missing required fields');
+            return res.status(400).json({ 
+                error: 'Missing required fields',
+                details: 'Email, password, recipient, and PDF are required'
+            });
+        }
+
+        console.log('Configuring email transport');
         const transporter = nodemailer.createTransport({
             service: 'gmail',
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false,
             auth: {
                 user: senderEmail,
-                pass: senderPassword,
+                pass: senderPassword
             },
+            tls: {
+                rejectUnauthorized: false
+            }
         });
 
+        console.log('Verifying transport');
+        await transporter.verify();
+
+        console.log('Preparing email content');
         const mailOptions = {
             from: senderEmail,
             to: toEmail,
-            subject,
+            subject: subject,
             text: message,
-            attachments: [{ filename: 'certificate.pdf', content: pdfBase64, encoding: 'base64' }],
+            attachments: [{
+                filename: 'certificate.pdf',
+                content: Buffer.from(pdfBase64, 'base64'),
+                contentType: 'application/pdf'
+            }]
         };
 
+        console.log('Sending email');
         const info = await transporter.sendMail(mailOptions);
-        res.status(200).json({ message: 'Email sent successfully!', info });
+        console.log('Email sent successfully:', info.messageId);
+
+        res.status(200).json({ 
+            success: true,
+            message: 'Email sent successfully!',
+            messageId: info.messageId 
+        });
+
     } catch (error) {
-        console.error('Error sending email:', error);
-        res.status(500).json({ error: 'Failed to send email.' });
+        console.error('Detailed email error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to send email',
+            details: error.message,
+            code: error.code
+        });
     }
 });
+
+
+
 
 // Send Bulk Email Endpoint
 app.post('/send-bulk-email', async (req, res) => {
